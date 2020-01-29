@@ -14,7 +14,9 @@ namespace StudentsFileSharingApp.Entities.Models
 
         public List<UserGroup> Groups { get; set; }
 
-        public List<Message> Messages { get; set; }
+        public List<Post> Messages { get; set; }
+
+        public List<PostComment> Comments { get; set; }
 
         public List<File> Files { get; set; }
 

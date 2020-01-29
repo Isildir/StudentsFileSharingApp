@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentsFileSharingApp.Entities;
 
 namespace StudentsFileSharingApp.Migrations
 {
     [DbContext(typeof(BasicContext))]
-    partial class BasicContextModelSnapshot : ModelSnapshot
+    [Migration("20200129134649_ExtendingModel")]
+    partial class ExtendingModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

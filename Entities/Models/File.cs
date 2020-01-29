@@ -14,9 +14,13 @@ namespace StudentsFileSharingApp.Entities.Models
 
         public FileType FileType { get; set; }
 
+        [Required]
         public DateTime DateAdded { get; set; }
 
+        [Required]
         public string DrivePath { get; set; }
+
+        public int OwnerId { get; set; }
 
         public User Owner { get; set; }
     }

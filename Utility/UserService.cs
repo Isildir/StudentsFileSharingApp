@@ -23,22 +23,16 @@ namespace StudentsFileSharingApp.Utility
 
             var user = context.Users.SingleOrDefault(x => x.Login.Equals(login));
 
-            // check if username exists
             if (user == null || !VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
                 return null;
 
-            // authentication successful
             return user;
         }
 
-        public User GetById(int id)
-        {
-            return context.Users.Find(id);
-        }
+        public User GetById(int id) => context.Users.Find(id);
 
         public User Create(User user, string password)
         {
-            // validation
             if (string.IsNullOrWhiteSpace(password))
                 throw new Exception("Password is required");
 
@@ -66,8 +60,6 @@ namespace StudentsFileSharingApp.Utility
             }
         }
 
-        // private helper methods
-
         private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             if (password == null) throw new ArgumentNullException("password");
@@ -89,7 +81,7 @@ namespace StudentsFileSharingApp.Utility
 
             using (var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt))
             {
-                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
                 for (int i = 0; i < computedHash.Length; i++)
                 {
                     if (computedHash[i] != storedHash[i]) return false;

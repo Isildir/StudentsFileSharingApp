@@ -16,6 +16,6 @@ namespace StudentsFileSharingApp.Entities.Models
 
         public List<File> Files { get; set; }
 
-        public List<Message> ChatMessages { get; set; }
+        public List<Post> Posts { get; set; }
     }
 }

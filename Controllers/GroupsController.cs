@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StudentsFileSharingApp.Dtos;
 using StudentsFileSharingApp.Entities;
 using StudentsFileSharingApp.Entities.Models;
+using StudentsFileSharingApp.Entities.Models.Enums;
+using StudentsFileSharingApp.Entities.Models.ManyToMany;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,8 +13,8 @@ using System.Threading.Tasks;
 namespace StudentsFileSharingApp.Controllers
 {
     [Route("api/[controller]")]
-    [ApiController]
-    public class GroupsController : ControllerBase
+    [ApiController, Authorize]
+    public class GroupsController : BaseController
     {
         private readonly BasicContext context;
 
@@ -20,74 +23,129 @@ namespace StudentsFileSharingApp.Controllers
             this.context = context;
         }
 
-        /*
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteSkill(int id)
+        public async Task<IActionResult> DeleteGroup(int id)
         {
-            var ability = await context.Set<Skill>().FindAsync(id);
+            var record = await context.Set<Group>().FindAsync(id);
 
-            if (ability == null)
+            if (record == null)
                 return NotFound();
 
-            context.Set<Skill>().Remove(ability);
+            var userId = GetUserId();
+
+            if (!record.Members.Any(a => a.UserId == userId && a.UserRank == UserRank.Leader))
+                return BadRequest();
+
+            context.Set<Group>().Remove(record);
 
             await context.SaveChangesAsync();
 
             return NoContent();
         }
-        */
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<GroupDto>> GetSkill(int id)
+        public async Task<ActionResult<GroupDto>> GetGroup(int id)
         {
-            var item = await context.Set<Group>().FindAsync(id);
-
-            if (item == null)
+            if (!await context.Set<Group>().AnyAsync(a => a.Id == id))
                 return NotFound();
 
-            return new GroupDto { Id = item.Id, Name = item.Name };
+            var userId = GetUserId();
+
+            var dbResult = await context.Set<Group>()
+                .Include(a => a.Posts)
+                .ThenInclude(b => b.Comments)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            var result = new GroupDto
+            {
+                Id = dbResult.Id,
+                Name = dbResult.Name,
+                Posts = dbResult.Posts.Select(a => new PostDto
+                {
+                    Id = a.Id,
+                    AuthorName = a.Author.Name,
+                    Title = a.Tag,
+                    IsAuthor = a.AuthorId == userId,
+                    Content = a.Content,
+                    DateAdded = a.DateAdded,
+                    Comments = a.Comments.Select(b => new PostCommentDto
+                    {
+                        Id = b.Id,
+                        AuthorName = b.Author.Name,
+                        IsAuthor = b.AuthorId == userId,
+                        Content = b.Content,
+                        DateAdded = b.DateAdded
+                    }).ToList()
+                }).ToList()
+            };
+
+            return result;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<GroupDto>>> GetSkills()
+        public async Task<ActionResult<IEnumerable<GroupDto>>> GetGroups()
         {
-            var entities = await context.Set<Group>().ToListAsync();
+            var records = await context.Set<Group>().ToListAsync();
 
-            return Ok(entities.Select(a => new GroupDto { Id = a.Id, Name = a.Name }));
+            return Ok(records.Select(a => new GroupDto { Id = a.Id, Name = a.Name }));
         }
 
-        /*
         [HttpPost]
-        public async Task<ActionResult<SkillDto>> PostSkill(SkillDto skill)
+        public async Task<ActionResult<GroupDto>> JoinGroup(int id)
         {
-            if (skill == null)
-                return BadRequest();
+            var userId = GetUserId();
 
-            var entity = new Skill { Name = skill.Name };
+            var groupRecord = await context.Set<Group>().FindAsync(id);
+            var userRecord = await context.Set<User>().FindAsync(userId);
 
-            context.Set<Skill>().Add(entity);
-
-            await context.SaveChangesAsync();
-
-            return CreatedAtAction("GetAbility", new { id = skill.Id }, skill);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutSkill(int id, SkillDto skill)
-        {
-            if (id != skill.Id)
-                return BadRequest();
-
-            var entity = await context.Set<Skill>().FindAsync(id);
-
-            if (entity == null)
+            if (groupRecord == null || userRecord == null)
                 return NotFound();
 
-            entity.Name = skill.Name;
+            groupRecord.Members.Add(new UserGroup
+            {
+                User = userRecord,
+                UserRank = UserRank.Normal
+            });
 
             await context.SaveChangesAsync();
 
-            return NoContent();
-        }*/
+            return Ok();
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<GroupDto>> PostGroup(GroupDto record)
+        {
+            if (record == null)
+                return BadRequest();
+
+            var userId = GetUserId();
+
+            var userRecord = await context.Set<User>().FindAsync(userId);
+
+            if (userRecord == null)
+                return BadRequest();
+
+            if (context.Set<Group>().Any(a => a.Name.Equals(record.Name)))
+                return BadRequest($"Group with name {record.Name} already exists");
+
+            var entity = new Group
+            {
+                Name = record.Name,
+                Members = new List<UserGroup>
+                {
+                    new UserGroup
+                    {
+                        User = userRecord,
+                        UserRank = UserRank.Leader
+                    }
+                }
+            };
+
+            context.Set<Group>().Add(entity);
+
+            await context.SaveChangesAsync();
+
+            return CreatedAtAction("GetGroup", new { id = record.Id }, record);
+        }
     }
 }
