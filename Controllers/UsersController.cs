@@ -28,7 +28,18 @@ namespace StudentsFileSharingApp.Controllers
         [AllowAnonymous, HttpPost("[action]")]
         public IActionResult Authenticate([FromBody]UserDto userDto)
         {
-            var user = userService.Authenticate(userDto.Login, userDto.Password);
+            User user;
+
+            try
+            {
+                user = userService.Authenticate(userDto.Login, userDto.Password);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"{nameof(UsersController)} {nameof(Authenticate)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest(ex.Message);
+            }
 
             if (user == null)
                 return BadRequest(new { message = "Username or password is incorrect" });
@@ -74,7 +85,9 @@ namespace StudentsFileSharingApp.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                Logger.Log($"{nameof(UsersController)} {nameof(Register)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest(ex.Message);
             }
         }
 

@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
-using System;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace StudentsFileSharingApp.Migrations
 {
@@ -45,9 +45,10 @@ namespace StudentsFileSharingApp.Migrations
                     Name = table.Column<string>(maxLength: 50, nullable: false),
                     FileType = table.Column<byte>(nullable: false),
                     DateAdded = table.Column<DateTime>(nullable: false),
-                    DrivePath = table.Column<string>(nullable: true),
-                    OwnerId = table.Column<int>(nullable: true),
-                    GroupId = table.Column<int>(nullable: true)
+                    DrivePath = table.Column<string>(nullable: false),
+                    OwnerId = table.Column<int>(nullable: false),
+                    GroupId = table.Column<int>(nullable: false),
+                    Size = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -57,42 +58,42 @@ namespace StudentsFileSharingApp.Migrations
                         column: x => x.GroupId,
                         principalTable: "Groups",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Files_Users_OwnerId",
                         column: x => x.OwnerId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Messages",
+                name: "Posts",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Content = table.Column<string>(nullable: true),
-                    GroupId = table.Column<int>(nullable: true),
-                    AuthorId = table.Column<int>(nullable: true),
+                    Content = table.Column<string>(nullable: false),
+                    GroupId = table.Column<int>(nullable: false),
+                    AuthorId = table.Column<int>(nullable: false),
                     DateAdded = table.Column<DateTime>(nullable: false),
-                    Tag = table.Column<string>(nullable: true)
+                    Title = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Messages", x => x.Id);
+                    table.PrimaryKey("PK_Posts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Messages_Users_AuthorId",
+                        name: "FK_Posts_Users_AuthorId",
                         column: x => x.AuthorId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Messages_Groups_GroupId",
+                        name: "FK_Posts_Groups_GroupId",
                         column: x => x.GroupId,
                         principalTable: "Groups",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -120,6 +121,42 @@ namespace StudentsFileSharingApp.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Comments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AuthorId = table.Column<int>(nullable: false),
+                    PostId = table.Column<int>(nullable: false),
+                    Content = table.Column<string>(nullable: false),
+                    DateAdded = table.Column<DateTime>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Comments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Comments_Users_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "Users",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Comments_Posts_PostId",
+                        column: x => x.PostId,
+                        principalTable: "Posts",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Comments_AuthorId",
+                table: "Comments",
+                column: "AuthorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Comments_PostId",
+                table: "Comments",
+                column: "PostId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_Files_GroupId",
                 table: "Files",
@@ -131,37 +168,64 @@ namespace StudentsFileSharingApp.Migrations
                 column: "OwnerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Messages_AuthorId",
-                table: "Messages",
+                name: "IX_Files_GroupId_Name",
+                table: "Files",
+                columns: new[] { "GroupId", "Name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_Name",
+                table: "Groups",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Posts_AuthorId",
+                table: "Posts",
                 column: "AuthorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Messages_GroupId",
-                table: "Messages",
+                name: "IX_Posts_GroupId",
+                table: "Posts",
                 column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Posts_GroupId_Title",
+                table: "Posts",
+                columns: new[] { "GroupId", "Title" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserGroup_GroupId",
                 table: "UserGroup",
                 column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Name",
+                table: "Users",
+                column: "Name",
+                unique: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Files");
+                name: "Comments");
 
             migrationBuilder.DropTable(
-                name: "Messages");
+                name: "Files");
 
             migrationBuilder.DropTable(
                 name: "UserGroup");
 
             migrationBuilder.DropTable(
-                name: "Groups");
+                name: "Posts");
 
             migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Groups");
         }
     }
 }

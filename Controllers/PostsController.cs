@@ -1,8 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using StudentsFileSharingApp.Dtos;
 using StudentsFileSharingApp.Entities;
 using StudentsFileSharingApp.Entities.Models;
+using StudentsFileSharingApp.Utility;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace StudentsFileSharingApp.Controllers
@@ -32,10 +36,26 @@ namespace StudentsFileSharingApp.Controllers
                 return BadRequest();
 
             context.Set<Post>().Remove(record);
+            context.Set<PostComment>().RemoveRange(context.Set<PostComment>().Where(a => a.PostId == id));
 
-            await context.SaveChangesAsync();
+            try
+            {
+                await context.SaveChangesAsync();
 
-            return NoContent();
+                return NoContent();
+            }
+            catch(DbUpdateException ex)
+            {
+                Logger.Log($"{nameof(PostsController)} {nameof(DeletePost)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
+            catch(Exception ex)
+            {
+                Logger.Log($"{nameof(PostsController)} {nameof(DeletePost)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
         }
 
         [HttpPost]
@@ -63,17 +83,33 @@ namespace StudentsFileSharingApp.Controllers
 
             context.Set<Post>().Add(entity);
 
-            await context.SaveChangesAsync();
-
-            return Ok(new PostDto
+            try
             {
-                AuthorName = entity.Author.Name,
-                DateAdded = entity.DateAdded,
-                Id = entity.Id,
-                IsAuthor = true,
-                Title = entity.Title,
-                Content = entity.Content
-            });
+                await context.SaveChangesAsync();
+
+                return Ok(new PostDto
+                {
+                    AuthorName = entity.Author.Name,
+                    DateAdded = entity.DateAdded,
+                    Id = entity.Id,
+                    IsAuthor = true,
+                    Title = entity.Title,
+                    Content = entity.Content,
+                    Comments = new List<PostCommentDto>()
+                });
+            }
+            catch (DbUpdateException ex)
+            {
+                Logger.Log($"{nameof(PostsController)} {nameof(PostPost)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"{nameof(PostsController)} {nameof(PostPost)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
         }
     }
 }

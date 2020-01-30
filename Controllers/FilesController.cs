@@ -43,13 +43,28 @@ namespace StudentsFileSharingApp.Controllers
             if (record.OwnerId != userId)
                 return BadRequest();
 
-            System.IO.File.Delete(record.DrivePath);
+            try
+            {
+                System.IO.File.Delete(record.DrivePath);
 
-            context.Set<DBFile>().Remove(record);
+                await context.SaveChangesAsync();
 
-            await context.SaveChangesAsync();
+                context.Set<DBFile>().Remove(record);
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (DbUpdateException ex)
+            {
+                Logger.Log($"{nameof(FilesController)} {nameof(DeleteFile)}", ex.Message, NLog.LogLevel.Error, ex);
+
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"{nameof(FilesController)} {nameof(DeleteFile)}", ex.Message, NLog.LogLevel.Error, ex);
+
+                return BadRequest();
+            }
         }
 
         [HttpPost("[action]/{id}"), ActionName(nameof(UploadFile))]
@@ -116,8 +131,16 @@ namespace StudentsFileSharingApp.Controllers
                     IsOwner = true
                 });
             }
-            catch (Exception e)
+            catch (DbUpdateException ex)
             {
+                Logger.Log($"{nameof(FilesController)} {nameof(UploadFile)}", ex.Message, NLog.LogLevel.Error, ex);
+
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"{nameof(FilesController)} {nameof(UploadFile)}", ex.Message, NLog.LogLevel.Error, ex);
+
                 return BadRequest();
             }
         }

@@ -3,6 +3,6 @@
     public enum FileType : byte
     {
         Document = 1,
-        Photo
+        Photo = 2
     }
 }

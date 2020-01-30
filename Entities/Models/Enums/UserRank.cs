@@ -2,7 +2,7 @@
 {
     public enum UserRank : byte
     {
-        Normal,
-        Leader
+        Normal = 1,
+        Leader = 2
     }
 }

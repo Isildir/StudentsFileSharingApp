@@ -56,6 +56,9 @@ namespace StudentsFileSharingApp.Migrations
 
                     b.HasIndex("OwnerId");
 
+                    b.HasIndex("GroupId", "Name")
+                        .IsUnique();
+
                     b.ToTable("Files");
                 });
 
@@ -72,6 +75,9 @@ namespace StudentsFileSharingApp.Migrations
                         .HasMaxLength(50);
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("Groups");
                 });
@@ -116,7 +122,7 @@ namespace StudentsFileSharingApp.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
@@ -124,7 +130,10 @@ namespace StudentsFileSharingApp.Migrations
 
                     b.HasIndex("GroupId");
 
-                    b.ToTable("Messages");
+                    b.HasIndex("GroupId", "Title")
+                        .IsUnique();
+
+                    b.ToTable("Posts");
                 });
 
             modelBuilder.Entity("StudentsFileSharingApp.Entities.Models.PostComment", b =>
@@ -153,7 +162,7 @@ namespace StudentsFileSharingApp.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("PostComment");
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("StudentsFileSharingApp.Entities.Models.User", b =>
@@ -180,6 +189,9 @@ namespace StudentsFileSharingApp.Migrations
                         .HasColumnType("varbinary(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });

@@ -6,6 +6,7 @@ using StudentsFileSharingApp.Entities;
 using StudentsFileSharingApp.Entities.Models;
 using StudentsFileSharingApp.Entities.Models.Enums;
 using StudentsFileSharingApp.Entities.Models.ManyToMany;
+using StudentsFileSharingApp.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,9 +40,24 @@ namespace StudentsFileSharingApp.Controllers
 
             context.Set<Group>().Remove(record);
 
-            await context.SaveChangesAsync();
+            try
+            {
+                await context.SaveChangesAsync();
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (DbUpdateException ex)
+            {
+                Logger.Log($"{nameof(GroupsController)} {nameof(DeleteGroup)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"{nameof(GroupsController)} {nameof(DeleteGroup)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
         }
 
         [HttpGet("{id}")]
@@ -85,9 +101,11 @@ namespace StudentsFileSharingApp.Controllers
                     }).OrderByDescending(c => c.DateAdded).ToList()
                 });
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return Ok();
+                Logger.Log($"{nameof(GroupsController)} {nameof(GetGroup)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
             }
         }
 
@@ -130,7 +148,7 @@ namespace StudentsFileSharingApp.Controllers
                 return NotFound();
 
             if (groupRecord.Members.Any(a => a.UserId == userId))
-                return BadRequest();
+                return Ok();
 
             groupRecord.Members.Add(new UserGroup
             {
@@ -138,9 +156,24 @@ namespace StudentsFileSharingApp.Controllers
                 UserRank = UserRank.Normal
             });
 
-            await context.SaveChangesAsync();
+            try
+            {
+                await context.SaveChangesAsync();
 
-            return Ok();
+                return Ok();
+            }
+            catch (DbUpdateException ex)
+            {
+                Logger.Log($"{nameof(GroupsController)} {nameof(JoinGroup)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"{nameof(GroupsController)} {nameof(JoinGroup)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
         }
 
         [HttpPost("[action]/{id}"), ActionName(nameof(LeaveGroup))]
@@ -161,9 +194,24 @@ namespace StudentsFileSharingApp.Controllers
 
             groupRecord.Members.Remove(member);
 
-            await context.SaveChangesAsync();
+            try
+            {
+                await context.SaveChangesAsync();
 
-            return Ok();
+                return Ok();
+            }
+            catch (DbUpdateException ex)
+            {
+                Logger.Log($"{nameof(GroupsController)} {nameof(LeaveGroup)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"{nameof(GroupsController)} {nameof(LeaveGroup)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
         }
 
         [HttpPost]
@@ -197,9 +245,24 @@ namespace StudentsFileSharingApp.Controllers
 
             context.Set<Group>().Add(entity);
 
-            await context.SaveChangesAsync();
+            try
+            {
+                await context.SaveChangesAsync();
 
-            return CreatedAtAction("GetGroup", new { id = record.Id }, record);
+                return Ok(new GroupDto { Id = entity.Id });
+            }
+            catch (DbUpdateException ex)
+            {
+                Logger.Log($"{nameof(GroupsController)} {nameof(PostGroup)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"{nameof(GroupsController)} {nameof(PostGroup)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
         }
     }
 }

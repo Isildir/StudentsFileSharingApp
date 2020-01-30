@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using StudentsFileSharingApp.Dtos;
 using StudentsFileSharingApp.Entities;
 using StudentsFileSharingApp.Entities.Models;
+using StudentsFileSharingApp.Utility;
 using System;
 using System.Threading.Tasks;
 
@@ -33,9 +35,24 @@ namespace StudentsFileSharingApp.Controllers
 
             context.Set<PostComment>().Remove(record);
 
-            await context.SaveChangesAsync();
+            try
+            {
+                await context.SaveChangesAsync();
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (DbUpdateException ex)
+            {
+                Logger.Log($"{nameof(PostsController)} {nameof(DeleteComment)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"{nameof(PostsController)} {nameof(DeleteComment)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
         }
 
         [HttpPost]
@@ -62,16 +79,31 @@ namespace StudentsFileSharingApp.Controllers
 
             context.Set<PostComment>().Add(entity);
 
-            await context.SaveChangesAsync();
-
-            return Ok(new PostCommentDto
+            try
             {
-                Id = entity.Id,
-                AuthorName = entity.Author.Name,
-                Content = entity.Content,
-                DateAdded = entity.DateAdded,
-                IsAuthor = true
-            });
+                await context.SaveChangesAsync();
+
+                return Ok(new PostCommentDto
+                {
+                    Id = entity.Id,
+                    AuthorName = entity.Author.Name,
+                    Content = entity.Content,
+                    DateAdded = entity.DateAdded,
+                    IsAuthor = true
+                });
+            }
+            catch (DbUpdateException ex)
+            {
+                Logger.Log($"{nameof(PostsController)} {nameof(DeleteComment)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"{nameof(PostsController)} {nameof(DeleteComment)}", ex.Message, NLog.LogLevel.Warn, ex);
+
+                return BadRequest();
+            }
         }
     }
 }
