@@ -6,6 +6,13 @@ namespace StudentsFileSharingApp.Entities.Models
 {
     public class Group
     {
+        public Group()
+        {
+            Members = new List<UserGroup>();
+            Files = new List<File>();
+            Posts = new List<Post>();
+        }
+
         [Key]
         public int Id { get; set; }
 

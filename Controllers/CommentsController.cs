@@ -64,7 +64,14 @@ namespace StudentsFileSharingApp.Controllers
 
             await context.SaveChangesAsync();
 
-            return CreatedAtAction("GetComment", new { id = record.Id }, record);
+            return Ok(new PostCommentDto
+            {
+                Id = entity.Id,
+                AuthorName = entity.Author.Name,
+                Content = entity.Content,
+                DateAdded = entity.DateAdded,
+                IsAuthor = true
+            });
         }
     }
 }

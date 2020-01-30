@@ -57,7 +57,7 @@ namespace StudentsFileSharingApp.Controllers
                 Author = userRecord,
                 DateAdded = DateTime.UtcNow,
                 Content = record.Content,
-                Tag = record.Title,
+                Title = record.Title,
                 Group = groupRecord
             };
 
@@ -65,7 +65,15 @@ namespace StudentsFileSharingApp.Controllers
 
             await context.SaveChangesAsync();
 
-            return CreatedAtAction("GetPost", new { id = record.Id }, record);
+            return Ok(new PostDto
+            {
+                AuthorName = entity.Author.Name,
+                DateAdded = entity.DateAdded,
+                Id = entity.Id,
+                IsAuthor = true,
+                Title = entity.Title,
+                Content = entity.Content
+            });
         }
     }
 }

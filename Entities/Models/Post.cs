@@ -6,6 +6,11 @@ namespace StudentsFileSharingApp.Entities.Models
 {
     public class Post
     {
+        public Post()
+        {
+            Comments = new List<PostComment>();
+        }
+
         [Key]
         public int Id { get; set; }
 
@@ -24,7 +29,7 @@ namespace StudentsFileSharingApp.Entities.Models
         public DateTime DateAdded { get; set; }
 
         [Required]
-        public string Tag { get; set; }
+        public string Title { get; set; }
 
         public List<PostComment> Comments { get; set; }
     }

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using StudentsFileSharingApp.Entities;
 using StudentsFileSharingApp.Interfaces;
@@ -23,7 +24,6 @@ namespace StudentsFileSharingApp.Configuration
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -45,7 +45,6 @@ namespace StudentsFileSharingApp.Configuration
             });
         }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
@@ -55,11 +54,9 @@ namespace StudentsFileSharingApp.Configuration
             services.AddDbContext<BasicContext>(options =>
               options.UseSqlServer(Configuration.GetConnectionString("BasicContext")));
 
-            // configure strongly typed settings objects
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettingsSection);
 
-            // configure jwt authentication
             var appSettings = appSettingsSection.Get<AppSettings>();
             var key = Encoding.ASCII.GetBytes(appSettings.Secret);
             services.AddAuthentication(x =>
@@ -78,7 +75,6 @@ namespace StudentsFileSharingApp.Configuration
                         var user = userService.GetById(userId);
                         if (user == null)
                         {
-                            // return unauthorized if user no longer exists
                             context.Fail("Unauthorized");
                         }
                         return Task.CompletedTask;
@@ -95,8 +91,8 @@ namespace StudentsFileSharingApp.Configuration
                 };
             });
 
-            // configure DI for application services
             services.AddScoped<IUserService, UserService>();
+            services.AddSingleton(resolver => resolver.GetRequiredService<IOptions<AppSettings>>().Value);
         }
     }
 }

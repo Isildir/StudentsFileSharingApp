@@ -23,5 +23,11 @@ namespace StudentsFileSharingApp.Entities.Models
         public int OwnerId { get; set; }
 
         public User Owner { get; set; }
+
+        public int GroupId { get; set; }
+
+        public Group Group { get; set; }
+
+        public string Size { get; set; }
     }
 }
