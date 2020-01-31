@@ -2,7 +2,7 @@
 
 namespace StudentsFileSharingApp.Dtos
 {
-    internal class FileDto
+    public class FileDto
     {
         public int Id { get; set; }
 

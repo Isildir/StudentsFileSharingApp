@@ -30,6 +30,24 @@ namespace StudentsFileSharingApp.Controllers
             this.appSettings = appSettings;
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<IEnumerable<FileDto>>> GetFiles(int id)
+        {
+            var userId = GetUserId();
+
+            var records = await context.Set<DBFile>().Include(a => a.Owner).Where(a => a.GroupId == id).ToListAsync();
+
+            return Ok(records.Select(a => new FileDto
+            {
+                Id = a.Id,
+                Owner = a.Owner.Name,
+                DateAdded = a.DateAdded,
+                FileName = a.Name,
+                IsOwner = a.OwnerId == userId,
+                Size = a.Size
+            }).ToList());
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFile(int id)
         {
@@ -74,14 +92,14 @@ namespace StudentsFileSharingApp.Controllers
             var sizeInMB = (size / 1024f) / 1024f;
 
             if (size <= 0 || sizeInMB > appSettings.MaxFileSizeInMB)
-                return BadRequest("Wront file size");
+                return BadRequest("Niepoprawny format pliku");
 
             var fileExtension = MimeTypesMap.GetExtension(file.ContentType);
 
             var availableFileFormats = new List<string> { "docx", "pdf", "jpeg", "png" };
 
             if (!availableFileFormats.Any(a => a.Equals(fileExtension)))
-                return BadRequest("Wrong file format");
+                return BadRequest("Niepoprawny format pliku");
 
             var userId = GetUserId();
 
@@ -99,12 +117,10 @@ namespace StudentsFileSharingApp.Controllers
 
             var filePath = Path.Combine(appSettings.FilesPath, Path.GetRandomFileName());
 
-            //Gdzieś tu skanowanie antywirusem
-
-            using var stream = System.IO.File.Create(filePath);
-
             try
             {
+                using var stream = System.IO.File.Create(filePath);
+
                 await file.CopyToAsync(stream);
 
                 var dbFile = new DBFile
@@ -131,8 +147,16 @@ namespace StudentsFileSharingApp.Controllers
                     IsOwner = true
                 });
             }
+            catch (ArgumentException ex)
+            {
+                Logger.Log($"{nameof(FilesController)} {nameof(UploadFile)}", ex.Message, NLog.LogLevel.Error, ex);
+
+                return BadRequest();
+            }
             catch (DbUpdateException ex)
             {
+                System.IO.File.Delete(filePath);
+
                 Logger.Log($"{nameof(FilesController)} {nameof(UploadFile)}", ex.Message, NLog.LogLevel.Error, ex);
 
                 return BadRequest();
